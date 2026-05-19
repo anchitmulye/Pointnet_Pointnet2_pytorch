@@ -24,10 +24,13 @@ def train_classification(args):
 
 def test_classification(args):
     """Test classification model"""
-    from test_classification import main as test_main
+    from test_classification import main as test_main, parse_args
     sys.argv = ['test_classification.py',
-                '--log_dir', args.checkpoint]
-    test_main()
+                '--log_dir', args.log_dir]
+    if args.use_cpu:
+        sys.argv.append('--use_cpu')
+    test_args = parse_args()
+    test_main(test_args)
 
 def train_partseg(args):
     """Train part segmentation model"""
@@ -123,6 +126,7 @@ def main():
                         help='GPU device')
     parser.add_argument('--use_cpu', action='store_true',
                         help='Use CPU mode')
+    parser.add_argument('--log_dir', type=str, required=True, help='Experiment root')
 
     # Testing/Export arguments
     parser.add_argument('--checkpoint', type=str, default=None,

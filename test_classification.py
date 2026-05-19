@@ -32,7 +32,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def test(model, loader, num_class=40, vote_num=1):
+def test(model, loader, args, num_class=40, vote_num=1):
     mean_correct = []
     classifier = model.eval()
     class_acc = np.zeros((num_class, 3))
@@ -42,7 +42,7 @@ def test(model, loader, num_class=40, vote_num=1):
             points, target = points.cuda(), target.cuda()
 
         points = points.transpose(2, 1)
-        vote_pool = torch.zeros(target.size()[0], num_class).cuda()
+        vote_pool = torch.zeros(target.size()[0], num_class).to(target.device)
 
         for _ in range(vote_num):
             pred, _ = classifier(points)
@@ -106,7 +106,7 @@ def main(args):
     classifier.load_state_dict(checkpoint['model_state_dict'])
 
     with torch.no_grad():
-        instance_acc, class_acc = test(classifier.eval(), testDataLoader, vote_num=args.num_votes, num_class=num_class)
+        instance_acc, class_acc = test(classifier.eval(), testDataLoader, args, vote_num=args.num_votes, num_class=num_class)
         log_string('Test Instance Accuracy: %f, Class Accuracy: %f' % (instance_acc, class_acc))
 
 
