@@ -18,13 +18,13 @@ sys.path.append('utils')
 #     check_structure(data_dir)
 #     print("✓ Data structure verified!")
 
-def convert_modelnet(source_dir, target_dir='data/modelnet40_normal_resampled', num_points=1024):
+def convert_modelnet(source_dir, target_dir='data/modelnet40_normal_resampled', num_points=1024, num_category=40):
     """Convert ModelNet data to required format"""
     from convert_data import convert_modelnet
     print(f"\nConverting ModelNet data...")
     print(f"Source: {source_dir}")
     print(f"Target: {target_dir}")
-    convert_modelnet(source_dir, target_dir, num_points)
+    convert_modelnet(source_dir, target_dir, num_points, num_category)
     print("✓ Conversion complete!")
 
 def generate_metadata(data_dir='data/ModelNet40'):
@@ -34,14 +34,16 @@ def generate_metadata(data_dir='data/ModelNet40'):
     generate_metadata(data_dir)
     print("✓ Metadata generated!")
 
-def download_modelnet():
+def download_modelnet(category):
     """Download ModelNet40 dataset"""
-    print("\nDownloading ModelNet40 dataset...")
+    print(f"\nDownloading ModelNet{category} dataset...")
     data_dir = Path('data')
     data_dir.mkdir(exist_ok=True)
 
-    # url = "http://3dvision.princeton.edu/projects/2014/3DShapeNets/ModelNet10.zip"
-    url = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
+    if category == 10:
+        url = "http://3dvision.princeton.edu/projects/2014/3DShapeNets/ModelNet10.zip"
+    else:
+        url = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
     target = data_dir / "modelnet40_normal_resampled.zip"
 
     import urllib.request
@@ -62,23 +64,26 @@ def main():
                         choices=['download', 'convert', 'check', 'metadata', 'all'],
                         help='Task to perform')
     # Place to change if dataset name is ModelNet10
-    parser.add_argument('--source', type=str, default='data/ModelNet40',
+    parser.add_argument('--source', type=str,
                         help='Source directory for conversion')
     parser.add_argument('--target', type=str, default='data/modelnet40_normal_resampled/',
                         help='Target directory')
     parser.add_argument('--num_points', type=int, default=1024,
                         help='Number of points to sample')
+    parser.add_argument('--num_category', type=int, default=None,
+                        choices=[10, 40], required=True,
+                        help='ModelNet dataset to use')
 
     args = parser.parse_args()
 
     if args.task == 'download' or args.task == 'all':
-        download_modelnet()
+        download_modelnet(args.num_category)
 
     if args.task == 'convert':
         if not args.source:
             print("Error: --source required for conversion")
             return
-        convert_modelnet(args.source, args.target, args.num_points)
+        convert_modelnet(args.source, args.target, args.num_points, args.num_category)
 
     if args.task == 'check' or args.task == 'all':
         pass

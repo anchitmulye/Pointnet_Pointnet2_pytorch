@@ -126,7 +126,7 @@ def main():
                         help='GPU device')
     parser.add_argument('--use_cpu', action='store_true',
                         help='Use CPU mode')
-    parser.add_argument('--log_dir', type=str, required=True, help='Experiment root')
+    parser.add_argument('--log_dir', type=str, required=False, help='Experiment root')
 
     # Testing/Export arguments
     parser.add_argument('--checkpoint', type=str, default=None,

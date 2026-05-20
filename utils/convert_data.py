@@ -65,12 +65,12 @@ def compute_normals(points):
     return normals
 
 
-def convert_modelnet(input_root, output_root, num_points=1024):
+def convert_modelnet(input_root, output_root, num_points=1024, num_category=40):
     """
-    Convert ModelNet10 .off files to .txt format
+    Convert ModelNet .off files to .txt format
 
     Args:
-        input_root: Path to original ModelNet10 (contains class/train and class/test)
+        input_root: Path to original ModelNet (contains class/train and class/test)
         output_root: Path to output directory
         num_points: Number of points to sample per model
     """
@@ -175,25 +175,27 @@ def convert_modelnet(input_root, output_root, num_points=1024):
     print("Generating metadata files...")
 
     # modelnet10_shape_names.txt
-    shape_names_file = os.path.join(output_root, 'modelnet40_shape_names.txt')
+    if num_category == 10:
+        file_prefix = "modelnet10"
+    else:
+        file_prefix = "modelnet40"
+    shape_names_file = os.path.join(output_root, f"{file_prefix}_shape_names.txt")
     with open(shape_names_file, 'w') as f:
         for cls in classes:
             f.write(cls + '\n')
-    print(f"  ✓ Created: modelnet40_shape_names.txt")
+    print(f"  Created: {file_prefix}_shape_names.txt")
 
-    # modelnet10_train.txt
-    train_file = os.path.join(output_root, 'modelnet40_train.txt')
+    train_file = os.path.join(output_root, f"{file_prefix}_train.txt")
     with open(train_file, 'w') as f:
         for filename in train_files:
             f.write(filename + '\n')
-    print(f"  ✓ Created: modelnet10_train.txt ({len(train_files)} samples)")
+    print(f"  Created: {file_prefix}_train.txt ({len(train_files)} samples)")
 
-    # modelnet10_test.txt
-    test_file = os.path.join(output_root, 'modelnet40_test.txt')
+    test_file = os.path.join(output_root, f"{file_prefix}_test.txt")
     with open(test_file, 'w') as f:
         for filename in test_files:
             f.write(filename + '\n')
-    print(f"  ✓ Created: modelnet40_test.txt ({len(test_files)} samples)")
+    print(f"  Created: {file_prefix}_test.txt ({len(test_files)} samples)")
 
     print()
     print("=" * 70)
@@ -207,7 +209,7 @@ def convert_modelnet(input_root, output_root, num_points=1024):
     print("You can now train with:")
     print(f"  python train_classification.py \\")
     print(f"    --model pointnet_cls \\")
-    print(f"    --num_category 10 \\")
+    print(f"    --num_category {num_category}\\")
     print(f"    --use_normals \\")
     print(f"    --log_dir pointnet_modelnet10")
     print()
