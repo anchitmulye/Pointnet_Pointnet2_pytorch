@@ -199,7 +199,7 @@ def convert_modelnet(input_root, output_root, num_points=1024, num_category=40):
 
     print()
     print("=" * 70)
-    print("✓ Conversion Complete!")
+    print("  Conversion Complete!")
     print("=" * 70)
     print(f"  Classes: {len(classes)}")
     print(f"  Train samples: {len(train_files)}")
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not os.path.exists(args.input_root):
-        print(f"✗ ERROR: Input directory not found: {args.input_root}")
+        print(f" ERROR: Input directory not found: {args.input_root}")
         print("\nExpected structure:")
         print("  data/ModelNet40/")
         print("    ├── bathtub/")

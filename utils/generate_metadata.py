@@ -15,7 +15,7 @@ def generate_metadata(data_root, train_ratio=0.8):
     print(f"Data root: {data_root}")
 
     if not os.path.exists(data_root):
-        print(f"\n✗ ERROR: Directory not found: {data_root}")
+        print(f"\nERROR: Directory not found: {data_root}")
         return False
 
     # Find all class directories (exclude metadata files)
@@ -27,7 +27,7 @@ def generate_metadata(data_root, train_ratio=0.8):
     class_dirs = sorted(class_dirs)
 
     if not class_dirs:
-        print(f"\n✗ ERROR: No class directories found in {data_root}")
+        print(f"\nERROR: No class directories found in {data_root}")
         print("Expected structure: data_root/class_name/*.txt")
         return False
 
@@ -40,7 +40,7 @@ def generate_metadata(data_root, train_ratio=0.8):
         for cls in class_dirs:
             f.write(cls + '\n')
 
-    print(f"\n✓ Created: modelnet40_shape_names.txt")
+    print(f"\nCreated: modelnet40_shape_names.txt")
 
     # Generate train and test splits
     train_files = []
@@ -55,10 +55,10 @@ def generate_metadata(data_root, train_ratio=0.8):
         files = sorted([os.path.basename(f).replace('.txt', '') for f in files])
 
         if not files:
-            print(f"  ⚠ {cls}: No .txt files found")
+            print(f"  {cls}: No .txt files found")
             continue
 
-        print(f"  ✓ {cls}: {len(files)} files")
+        print(f"  {cls}: {len(files)} files")
 
         # Split: first train_ratio% train, rest test
         split_idx = int(len(files) * train_ratio)
@@ -74,7 +74,7 @@ def generate_metadata(data_root, train_ratio=0.8):
         for fname in train_files:
             f.write(fname + '\n')
 
-    print(f"\n✓ Created: modelnet40_train.txt ({len(train_files)} samples)")
+    print(f"\nCreated: modelnet40_train.txt ({len(train_files)} samples)")
 
     # Write test split
     test_file = os.path.join(data_root, 'modelnet40_test.txt')
@@ -82,10 +82,10 @@ def generate_metadata(data_root, train_ratio=0.8):
         for fname in test_files:
             f.write(fname + '\n')
 
-    print(f"✓ Created: modelnet40_test.txt ({len(test_files)} samples)")
+    print(f"Created: modelnet40_test.txt ({len(test_files)} samples)")
 
     print("\n" + "=" * 60)
-    print("✓ Metadata Generation Complete!")
+    print("Metadata Generation Complete!")
     print("=" * 60)
     print(f"  Classes: {len(class_dirs)}")
     print(f"  Train samples: {len(train_files)}")
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     success = generate_metadata(args.data_root, args.train_ratio)
 
     if not success:
-        print("\n✗ Failed to generate metadata files")
+        print("\nFailed to generate metadata files")
         print("\nMake sure your data directory contains class folders with .txt files:")
         print("  data/modelnet40_normal_resampled/")
         print("    ├── airplane/")

@@ -16,7 +16,7 @@ sys.path.append('utils')
 #     from check_data_structure import check_structure
 #     print(f"\nChecking data structure in: {data_dir}")
 #     check_structure(data_dir)
-#     print("✓ Data structure verified!")
+#     print("Data structure verified!")
 
 def convert_modelnet(source_dir, target_dir='data/modelnet40_normal_resampled', num_points=1024, num_category=40):
     """Convert ModelNet data to required format"""
@@ -25,14 +25,14 @@ def convert_modelnet(source_dir, target_dir='data/modelnet40_normal_resampled', 
     print(f"Source: {source_dir}")
     print(f"Target: {target_dir}")
     convert_modelnet(source_dir, target_dir, num_points, num_category)
-    print("✓ Conversion complete!")
+    print("Conversion complete!")
 
 def generate_metadata(data_dir='data/ModelNet40'):
     """Generate metadata for dataset"""
     from generate_metadata import generate_metadata
     print(f"\nGenerating metadata for: {data_dir}")
     generate_metadata(data_dir)
-    print("✓ Metadata generated!")
+    print("Metadata generated!")
 
 def download_modelnet(category):
     """Download ModelNet40 dataset"""

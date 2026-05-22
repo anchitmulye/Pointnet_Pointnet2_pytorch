@@ -120,7 +120,7 @@ def export_to_onnx(args):
                 print("Simplification failed - validation error")
 
         except ImportError:
-            print("⚠ onnx-simplifier not installed. Install with: pip install onnx-simplifier")
+            print("onnx-simplifier not installed. Install with: pip install onnx-simplifier")
 
     # Verify the exported model
     try:

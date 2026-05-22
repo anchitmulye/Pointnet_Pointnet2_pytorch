@@ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     )
 
-    print(f"✓ ONNX model exported successfully to: {output_path}")
+    print(f"ONNX model exported successfully to: {output_path}")
 
     # Optional: Simplify the ONNX model
     if args.simplify:
@@ -128,19 +128,19 @@ def export_to_onnx(args):
             if check:
                 simplified_path = output_path.replace('.onnx', '_simplified.onnx')
                 onnx.save(model_simplified, simplified_path)
-                print(f"✓ Simplified ONNX model saved to: {simplified_path}")
+                print(f"implified ONNX model saved to: {simplified_path}")
             else:
-                print("✗ Simplification failed - validation error")
+                print("Simplification failed - validation error")
 
         except ImportError:
-            print("⚠ onnx-simplifier not installed. Install with: pip install onnx-simplifier")
+            print("onnx-simplifier not installed. Install with: pip install onnx-simplifier")
 
     # Verify the exported model
     try:
         import onnx
         onnx_model = onnx.load(output_path)
         onnx.checker.check_model(onnx_model)
-        print(f"✓ ONNX model verification passed")
+        print(f"ONNX model verification passed")
 
         # Print model info
         print("\n--- Model Information ---")
@@ -151,9 +151,9 @@ def export_to_onnx(args):
         print(f"Outputs: {[o.name for o in onnx_model.graph.output]}")
 
     except ImportError:
-        print("⚠ onnx not installed. Install with: pip install onnx")
+        print("onnx not installed. Install with: pip install onnx")
     except Exception as e:
-        print(f"⚠ ONNX verification failed: {str(e)}")
+        print(f"ONNX verification failed: {str(e)}")
 
     return output_path
 
