@@ -26,6 +26,10 @@ def test_classification(args):
     """Test classification model"""
     from test_classification import main as test_main, parse_args
     sys.argv = ['test_classification.py',
+                '--model', args.model,
+                '--batch_size', str(args.batch_size),
+                '--num_category', str(args.num_category),
+                '--num_point', str(args.num_points),
                 '--log_dir', args.log_dir]
     if args.use_cpu:
         sys.argv.append('--use_cpu')
