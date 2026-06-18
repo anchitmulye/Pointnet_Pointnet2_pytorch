@@ -29,8 +29,8 @@ def parse_args():
                         help='number of points in point cloud')
     parser.add_argument('--output_path', type=str, default=None,
                         help='output ONNX file path (default: model_name.onnx)')
-    parser.add_argument('--opset_version', type=int, default=11,
-                        help='ONNX opset version (default: 11)')
+    parser.add_argument('--opset_version', type=int, default=18,
+                        help='ONNX opset version (default: 18)')
     parser.add_argument('--simplify', action='store_true', default=False,
                         help='simplify ONNX model using onnx-simplifier')
     return parser.parse_args()

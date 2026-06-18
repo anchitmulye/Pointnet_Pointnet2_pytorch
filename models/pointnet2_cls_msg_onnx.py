@@ -19,7 +19,7 @@ class get_model(nn.Module):
         self.drop1 = nn.Dropout(0.4)
         self.fc2 = nn.Linear(512, 256)
         self.bn2 = nn.BatchNorm1d(256)
-        self.drop2 = nn.Dropout(0.4)
+        self.drop2 = nn.Dropout(0.5)
         self.fc3 = nn.Linear(256, num_class)
 
     def forward(self, xyz):
