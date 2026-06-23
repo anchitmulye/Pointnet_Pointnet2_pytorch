@@ -27,8 +27,8 @@ def parse_args():
                         help='number of points in point cloud')
     parser.add_argument('--output_path', type=str, default=None,
                         help='output ONNX file path (default: model_name.onnx)')
-    parser.add_argument('--opset_version', type=int, default=11,
-                        help='ONNX opset version (default: 11)')
+    parser.add_argument('--opset_version', type=int, default=None,
+                        help='ONNX opset version (default: auto detect from PyTorch)')
     parser.add_argument('--simplify', action='store_true', default=False,
                         help='simplify ONNX model using onnx-simplifier')
     return parser.parse_args()
@@ -36,6 +36,10 @@ def parse_args():
 
 def export_to_onnx(args):
     """Export semantic segmentation model to ONNX format"""
+    from onnx_utils import default_opset
+    if args.opset_version is None:
+        args.opset_version = default_opset()
+    print(f"ONNX opset version: {args.opset_version}")
 
     # Input channels for semantic segmentation (xyz + rgb + normalized xyz)
     in_channels = 9
@@ -86,6 +90,7 @@ def export_to_onnx(args):
         export_params=True,
         opset_version=args.opset_version,
         do_constant_folding=True,
+        dynamo=False,
         input_names=['point_cloud'],
         output_names=['seg_pred'],
         dynamic_axes={

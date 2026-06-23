@@ -18,11 +18,9 @@ def square_distance(src, dst):
     Output:
         dist: per-point square distance, [B, N, M]
     """
-    B, N, _ = src.shape
-    _, M, _ = dst.shape
     dist = -2 * torch.matmul(src, dst.permute(0, 2, 1))
-    dist += torch.sum(src ** 2, -1).view(B, N, 1)
-    dist += torch.sum(dst ** 2, -1).view(B, 1, M)
+    dist += torch.sum(src ** 2, -1).unsqueeze(2)
+    dist += torch.sum(dst ** 2, -1).unsqueeze(1)
     return dist
 
 
@@ -47,8 +45,9 @@ def index_points(points, idx):
 
 def farthest_point_sample_onnx(xyz, npoint):
     """
-    ONNX-compatible sampling using stratified random sampling.
-    This is a simplified alternative to FPS that is fully ONNX compatible.
+    ONNX-compatible sampling using uniform stride-based sampling.
+    Picks every (N // npoint)-th point, giving a spread that approximates FPS
+    without any Python loops or random ops that break ONNX tracing.
 
     Input:
         xyz: pointcloud data, [B, N, 3]
@@ -57,22 +56,15 @@ def farthest_point_sample_onnx(xyz, npoint):
         centroids: sampled pointcloud index, [B, npoint]
     """
     device = xyz.device
-    B, N, C = xyz.shape
+    # Use tensor ops for B so batch dim stays dynamic in the ONNX graph.
+    # N and C are fixed (1024 points, 3 coords) so Python ints are fine.
+    N = xyz.shape[1]
 
-    # Use stratified random sampling for ONNX compatibility
-    # Create random permutation for each batch
-    indices = torch.arange(N, dtype=torch.long, device=device).unsqueeze(0).expand(B, N)
-
-    # Add random noise for shuffling (deterministic during inference)
-    random_values = torch.rand(B, N, device=device)
-    _, shuffle_idx = torch.sort(random_values, dim=1)
-
-    # Gather shuffled indices
-    batch_indices = torch.arange(B, dtype=torch.long, device=device).unsqueeze(1).expand(B, N)
-    shuffled_indices = indices[batch_indices, shuffle_idx]
-
-    # Take first npoint indices (stratified sampling)
-    centroids = shuffled_indices[:, :npoint]
+    stride = N // npoint
+    indices = torch.arange(npoint, dtype=torch.long, device=device) * stride  # [npoint]
+    indices = indices.clamp(0, N - 1)
+    # expand along batch dim using tensor shape, not a Python int
+    centroids = indices.unsqueeze(0).expand(xyz.shape[0], npoint)  # [B, npoint]
 
     return centroids
 
@@ -112,7 +104,7 @@ def sample_and_group_onnx(npoint, nsample, xyz, points, use_knn=True):
         new_xyz: sampled points position data, [B, npoint, 3]
         new_points: sampled points data, [B, npoint, nsample, 3+D]
     """
-    B, N, C = xyz.shape
+    C = xyz.shape[2]
     S = npoint
 
     # Farthest point sampling
@@ -124,7 +116,7 @@ def sample_and_group_onnx(npoint, nsample, xyz, points, use_knn=True):
 
     # Group points
     grouped_xyz = index_points(xyz, idx)  # [B, npoint, nsample, 3]
-    grouped_xyz_norm = grouped_xyz - new_xyz.view(B, S, 1, C)  # [B, npoint, nsample, 3]
+    grouped_xyz_norm = grouped_xyz - new_xyz.unsqueeze(2)  # [B, npoint, nsample, 3]
 
     if points is not None:
         grouped_points = index_points(points, idx)  # [B, npoint, nsample, D]
@@ -147,11 +139,10 @@ def sample_and_group_all_onnx(xyz, points):
         new_points: sampled points data, [B, 1, N, 3+D]
     """
     device = xyz.device
-    B, N, C = xyz.shape
-    new_xyz = torch.zeros(B, 1, C).to(device)
-    grouped_xyz = xyz.view(B, 1, N, C)
+    new_xyz = torch.zeros_like(xyz[:, :1, :])        # [B, 1, 3] — dynamic B
+    grouped_xyz = xyz.unsqueeze(1)                   # [B, 1, N, 3]
     if points is not None:
-        new_points = torch.cat([grouped_xyz, points.view(B, 1, N, -1)], dim=-1)
+        new_points = torch.cat([grouped_xyz, points.unsqueeze(1)], dim=-1)
     else:
         new_points = grouped_xyz
     return new_xyz, new_points
@@ -237,7 +228,6 @@ class PointNetSetAbstractionMsgONNX(nn.Module):
         if points is not None:
             points = points.permute(0, 2, 1)
 
-        B, N, C = xyz.shape
         S = self.npoint
 
         # Sample points
@@ -249,11 +239,11 @@ class PointNetSetAbstractionMsgONNX(nn.Module):
             # Group points using k-NN
             idx = query_knn_point(nsample, xyz, new_xyz)
             grouped_xyz = index_points(xyz, idx)
-            grouped_xyz -= new_xyz.view(B, S, 1, C)
+            grouped_xyz -= new_xyz.unsqueeze(2)  # [B, S, 1, C] broadcast
 
             if points is not None:
                 grouped_points = index_points(points, idx)
-                grouped_points = torch.cat([grouped_xyz, grouped_points], dim=-1)
+                grouped_points = torch.cat([grouped_points, grouped_xyz], dim=-1)
             else:
                 grouped_points = grouped_xyz
 
@@ -297,11 +287,10 @@ class PointNetFeaturePropagationONNX(nn.Module):
         xyz2 = xyz2.permute(0, 2, 1)
 
         points2 = points2.permute(0, 2, 1)
-        B, N, C = xyz1.shape
         _, S, _ = xyz2.shape
 
         if S == 1:
-            interpolated_points = points2.repeat(1, N, 1)
+            interpolated_points = points2.expand(-1, xyz1.shape[1], -1)
         else:
             dists = square_distance(xyz1, xyz2)
             dists, idx = dists.sort(dim=-1)
@@ -310,7 +299,7 @@ class PointNetFeaturePropagationONNX(nn.Module):
             dist_recip = 1.0 / (dists + 1e-8)
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
-            interpolated_points = torch.sum(index_points(points2, idx) * weight.view(B, N, 3, 1), dim=2)
+            interpolated_points = torch.sum(index_points(points2, idx) * weight.unsqueeze(-1), dim=2)
 
         if points1 is not None:
             points1 = points1.permute(0, 2, 1)

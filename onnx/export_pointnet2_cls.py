@@ -12,6 +12,7 @@ ROOT_DIR = os.path.dirname(BASE_DIR)
 sys.path.append(ROOT_DIR)
 
 from models import pointnet2_cls_ssg_onnx, pointnet2_cls_msg_onnx
+from onnx_utils import default_opset
 
 
 def export_onnx(args):
@@ -66,8 +67,9 @@ def export_onnx(args):
         dummy_input,
         onnx_path,
         export_params=True,
-        opset_version=11,
+        opset_version=default_opset(),
         do_constant_folding=True,
+        dynamo=False,
         input_names=['input'],
         output_names=['output', 'features'],
         dynamic_axes={
