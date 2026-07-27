@@ -94,7 +94,7 @@ def export_to_onnx(args):
         output_path,
         export_params=True,
         opset_version=args.opset_version,
-        do_constant_folding=True,
+        do_constant_folding=False,
         dynamo=False,
         input_names=['point_cloud'],
         output_names=['logits', 'features'],
