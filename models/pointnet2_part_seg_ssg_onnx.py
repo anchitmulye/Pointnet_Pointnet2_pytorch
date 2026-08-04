@@ -4,7 +4,7 @@ ONNX-compatible PointNet++ SSG Part Segmentation Model
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from models.pointnet2_utils_onnx import PointNetSetAbstractionONNX, PointNetFeaturePropagationONNX
+from pointnet2_utils_onnx import PointNetSetAbstractionONNX, PointNetFeaturePropagationONNX
 
 
 class get_model(nn.Module):

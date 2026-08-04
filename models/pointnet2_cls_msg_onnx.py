@@ -3,7 +3,7 @@ ONNX-compatible PointNet++ MSG Classification Model
 """
 import torch.nn as nn
 import torch.nn.functional as F
-from models.pointnet2_utils_onnx import PointNetSetAbstractionMsgONNX, PointNetSetAbstractionONNX
+from pointnet2_utils_onnx import PointNetSetAbstractionMsgONNX, PointNetSetAbstractionONNX
 
 
 class get_model(nn.Module):
