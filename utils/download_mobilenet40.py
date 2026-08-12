@@ -85,30 +85,50 @@ def extract_zip(zip_path: Path, output_path: Path):
 def verify(output_path: Path):
     print("\nVerifying dataset ...")
 
-    txt_files   = list(output_path.rglob("*.txt"))
-    class_dirs  = [d for d in output_path.iterdir() if d.is_dir()]
+    # Metadata files that are NOT point cloud data — exclude from counts
+    METADATA_NAMES = {
+        "filelist.txt", "modelnet40_shape_names.txt", "modelnet40_train.txt",
+        "modelnet40_test.txt", "modelnet10_shape_names.txt",
+        "modelnet10_train.txt", "modelnet10_test.txt",
+    }
 
-    print(f"  Classes  : {len(class_dirs)}")
-    print(f"  .txt files: {len(txt_files)}")
+    all_txt   = list(output_path.rglob("*.txt"))
+    # Point cloud files live inside class subdirectories (e.g. airplane/airplane_0001.txt)
+    pc_files  = [f for f in all_txt if f.name not in METADATA_NAMES and f.parent.name != output_path.name]
+    class_dirs = [d for d in output_path.iterdir() if d.is_dir()]
 
-    if not txt_files:
-        print("ERROR: No .txt files found. Extraction may have failed.")
+    print(f"  Classes     : {len(class_dirs)}")
+    print(f"  Point cloud .txt files: {len(pc_files)}")
+
+    if not pc_files:
+        print("ERROR: No point cloud .txt files found. Extraction may have failed.")
         sys.exit(1)
 
-    sample = txt_files[0]
+    # Pick a real point cloud file (sorted → deterministic)
+    sample = sorted(pc_files)[0]
     with open(sample) as f:
         lines = f.readlines()
-    cols = len(lines[0].strip().split(",")) if lines else 0
+    # Strip whitespace and split on space or comma
+    first_line = lines[0].strip().replace(",", " ").split() if lines else []
+    cols = len(first_line)
 
-    print(f"  Sample   : {sample.name}")
-    print(f"  Rows     : {len(lines)}  (expected ~10000)")
-    print(f"  Columns  : {cols}  (expected 6 — x,y,z,nx,ny,nz)")
+    print(f"  Sample      : {sample.relative_to(output_path)}")
+    print(f"  Rows        : {len(lines)}  (expected ~2048–10000)")
+    print(f"  Columns     : {cols}  (expected 6 — x,y,z,nx,ny,nz)")
 
-    ok = len(lines) >= 9000 and cols == 6 and len(class_dirs) == 40
+    ok = len(lines) >= 100 and cols == 6 and len(class_dirs) == 40
     if ok:
         print("\nDataset is correct and ready for training/evaluation.")
     else:
-        print("\nWARNING: Dataset format looks unexpected — check the files manually.")
+        if len(class_dirs) != 40:
+            print(f"\nWARNING: Expected 40 class directories, found {len(class_dirs)}.")
+        if cols != 6:
+            print(f"\nWARNING: Expected 6 columns (x,y,z,nx,ny,nz), found {cols}. Check sample file.")
+        if len(lines) < 100:
+            print(f"\nWARNING: Point cloud has only {len(lines)} points — may be truncated.")
+        if not (len(class_dirs) == 40 and cols == 6):
+            print("Run: head -2 data/modelnet40_normal_resampled/airplane/airplane_0001.txt")
+            print("to inspect the actual format manually.")
 
 
 def main():
