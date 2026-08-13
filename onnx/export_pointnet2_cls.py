@@ -9,7 +9,7 @@ import torch
 # Add parent directory to path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(ROOT_DIR)
+sys.path.append(os.path.join(ROOT_DIR, 'models'))
 
 from models import pointnet2_cls_ssg_onnx, pointnet2_cls_msg_onnx
 from onnx_utils import default_opset
@@ -67,7 +67,7 @@ def export_onnx(args):
         dummy_input,
         onnx_path,
         export_params=True,
-        opset_version=default_opset(),
+        opset_version=13,
         do_constant_folding=True,
         dynamo=False,
         input_names=['input'],
